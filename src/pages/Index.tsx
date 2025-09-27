@@ -45,14 +45,27 @@ const Index = () => {
   const [isPickingLocation, setIsPickingLocation] = useState(false);
 
   useEffect(() => {
-    // Check initial auth state
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
+    // Check for admin session first
+    const adminSession = localStorage.getItem('adminSession');
+    const adminEmail = localStorage.getItem('adminEmail');
+    
+    if (adminSession === 'true' && adminEmail) {
+      setUser({ id: 'admin', email: adminEmail });
+    } else {
+      // Check regular Supabase auth state
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setUser(session?.user ?? null);
+      });
+    }
 
-    // Listen for auth changes
+    // Listen for auth changes (only for regular users)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        // Clear admin session if regular user signs in
+        if (session) {
+          localStorage.removeItem('adminSession');
+          localStorage.removeItem('adminEmail');
+        }
         setUser(session?.user ?? null);
       }
     );
@@ -251,6 +264,29 @@ const Index = () => {
     window.location.href = '/auth';
   };
 
+  const handleLogout = async () => {
+    const isAdmin = localStorage.getItem('adminSession') === 'true';
+    
+    if (isAdmin) {
+      // Clear admin session
+      localStorage.removeItem('adminSession');
+      localStorage.removeItem('adminEmail');
+      setUser(null);
+    } else {
+      // Regular user logout
+      await supabase.auth.signOut();
+    }
+    
+    toast({
+      title: "Signed Out",
+      description: "You have been signed out successfully.",
+    });
+  };
+
+  const isAdmin = () => {
+    return localStorage.getItem('adminSession') === 'true';
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
       {/* Sidebar */}
@@ -260,13 +296,24 @@ const Index = () => {
             LPU Events
           </h1>
           {user ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowAdminPanel(true)}
-            >
-              <Settings className="w-4 h-4" />
-            </Button>
+            <div className="flex gap-2">
+              {isAdmin() && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowAdminPanel(true)}
+                >
+                  <Settings className="w-4 h-4" />
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+              >
+                <User className="w-4 h-4" />
+              </Button>
+            </div>
           ) : (
             <Button
               variant="ghost"
@@ -297,7 +344,7 @@ const Index = () => {
             Add New Event
           </Button>
           
-          {user && (
+          {user && isAdmin() && (
             <Button 
               onClick={() => setShowAdminPanel(true)}
               className="w-full bg-secondary hover:bg-secondary/80"
@@ -328,7 +375,7 @@ const Index = () => {
         selectedLocation={selectedLocation}
       />
 
-      {user && (
+      {user && isAdmin() && (
         <AdminPanel
           isOpen={showAdminPanel}
           onClose={() => setShowAdminPanel(false)}

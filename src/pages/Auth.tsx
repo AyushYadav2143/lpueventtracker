@@ -41,6 +41,31 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      // Check if this is admin login first
+      const { data: isAdmin, error: adminError } = await supabase.rpc('verify_admin_credentials', {
+        input_email: formData.email,
+        input_password: formData.password
+      });
+
+      if (adminError) {
+        console.error('Admin verification error:', adminError);
+      }
+
+      if (isAdmin) {
+        // For admin login, we'll create a special session indicator
+        localStorage.setItem('adminSession', 'true');
+        localStorage.setItem('adminEmail', formData.email);
+        
+        toast({
+          title: "Welcome Admin!",
+          description: "You have been signed in as administrator.",
+        });
+
+        navigate('/');
+        return;
+      }
+
+      // Regular user login
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
@@ -329,7 +354,7 @@ const Auth = () => {
 
             <div className="mt-4 text-center text-sm text-muted-foreground">
               <p>For demo purposes:</p>
-              <p className="text-xs">Admin login: admin / 2143</p>
+              <p className="text-xs">Admin login: admin@gmail.com / 214365</p>
             </div>
           </CardContent>
         </Card>
