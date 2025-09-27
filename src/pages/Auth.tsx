@@ -41,11 +41,15 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      console.log('Attempting login with:', formData.email); // Debug log
+      
       // Check if this is admin login first
       const { data: isAdmin, error: adminError } = await supabase.rpc('verify_admin_credentials', {
         input_email: formData.email,
         input_password: formData.password
       });
+
+      console.log('Admin verification result:', { isAdmin, adminError }); // Debug log
 
       if (adminError) {
         console.error('Admin verification error:', adminError);
@@ -53,6 +57,7 @@ const Auth = () => {
 
       if (isAdmin) {
         // For admin login, we'll create a special session indicator
+        console.log('Admin login successful, setting localStorage'); // Debug log
         localStorage.setItem('adminSession', 'true');
         localStorage.setItem('adminEmail', formData.email);
         
@@ -61,11 +66,13 @@ const Auth = () => {
           description: "You have been signed in as administrator.",
         });
 
+        console.log('Navigating to home page'); // Debug log
         navigate('/');
         return;
       }
 
       // Regular user login
+      console.log('Attempting regular user login'); // Debug log
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,

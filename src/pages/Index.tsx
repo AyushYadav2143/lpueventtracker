@@ -49,11 +49,15 @@ const Index = () => {
     const adminSession = localStorage.getItem('adminSession');
     const adminEmail = localStorage.getItem('adminEmail');
     
+    console.log('Admin session check:', { adminSession, adminEmail }); // Debug log
+    
     if (adminSession === 'true' && adminEmail) {
+      console.log('Setting admin user'); // Debug log
       setUser({ id: 'admin', email: adminEmail });
     } else {
       // Check regular Supabase auth state
       supabase.auth.getSession().then(({ data: { session } }) => {
+        console.log('Regular auth session:', session); // Debug log
         setUser(session?.user ?? null);
       });
     }
@@ -61,6 +65,7 @@ const Index = () => {
     // Listen for auth changes (only for regular users)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('Auth state change:', event, session); // Debug log
         // Clear admin session if regular user signs in
         if (session) {
           localStorage.removeItem('adminSession');
@@ -284,7 +289,9 @@ const Index = () => {
   };
 
   const isAdmin = () => {
-    return localStorage.getItem('adminSession') === 'true';
+    const result = localStorage.getItem('adminSession') === 'true';
+    console.log('isAdmin check:', result, localStorage.getItem('adminSession')); // Debug log
+    return result;
   };
 
   return (
