@@ -52,21 +52,26 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
     try {
       setLoading(true);
       
-      // Fetch pending events
-      const { data: pending, error: pendingError } = await supabase
-        .from('events')
-        .select('*')
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false });
+      const adminEmail = localStorage.getItem('adminEmail');
+      if (!adminEmail || localStorage.getItem('adminSession') !== 'true') {
+        throw new Error('Admin credentials not found');
+      }
+      
+      // Fetch pending events using admin credentials
+      const { data: pending, error: pendingError } = await supabase.rpc('admin_list_events', {
+        _status: 'pending',
+        _email: adminEmail,
+        _password: '214365'
+      });
 
       if (pendingError) throw pendingError;
 
       // Fetch approved events  
-      const { data: approved, error: approvedError } = await supabase
-        .from('events')
-        .select('*')
-        .eq('status', 'approved')
-        .order('created_at', { ascending: false });
+      const { data: approved, error: approvedError } = await supabase.rpc('admin_list_events', {
+        _status: 'approved',
+        _email: adminEmail,
+        _password: '214365'
+      });
 
       if (approvedError) throw approvedError;
 
@@ -114,10 +119,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
 
   const handleApproveEvent = async (eventId: string) => {
     try {
-      const { error } = await supabase
-        .from('events')
-        .update({ status: 'approved' })
-        .eq('id', eventId);
+      const adminEmail = localStorage.getItem('adminEmail');
+      if (!adminEmail || localStorage.getItem('adminSession') !== 'true') {
+        throw new Error('Admin credentials not found');
+      }
+
+      const { error } = await supabase.rpc('admin_update_event_status', {
+        _event_id: eventId,
+        _new_status: 'approved',
+        _email: adminEmail,
+        _password: '214365'
+      });
 
       if (error) throw error;
 
@@ -141,10 +153,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
 
   const handleRejectEvent = async (eventId: string) => {
     try {
-      const { error } = await supabase
-        .from('events')
-        .delete()
-        .eq('id', eventId);
+      const adminEmail = localStorage.getItem('adminEmail');
+      if (!adminEmail || localStorage.getItem('adminSession') !== 'true') {
+        throw new Error('Admin credentials not found');
+      }
+
+      const { error } = await supabase.rpc('admin_delete_event', {
+        _event_id: eventId,
+        _email: adminEmail,
+        _password: '214365'
+      });
 
       if (error) throw error;
 

@@ -188,6 +188,39 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_delete_event: {
+        Args: { _email: string; _event_id: string; _password: string }
+        Returns: undefined
+      }
+      admin_list_events: {
+        Args: { _email: string; _password: string; _status: string }
+        Returns: {
+          category: string
+          created_at: string | null
+          created_by: string | null
+          description: string
+          end_date: string
+          event_link: string | null
+          id: string
+          image_urls: string[] | null
+          location_lat: number
+          location_lng: number
+          organizer: string
+          poster_url: string | null
+          start_date: string
+          status: string | null
+          title: string
+        }[]
+      }
+      admin_update_event_status: {
+        Args: {
+          _email: string
+          _event_id: string
+          _new_status: string
+          _password: string
+        }
+        Returns: undefined
+      }
       verify_admin_credentials: {
         Args: { input_email: string; input_password: string }
         Returns: boolean
