@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { MapPin, Calendar, Upload } from 'lucide-react';
+import { MapPin, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface AddEventModalProps {
@@ -33,13 +33,11 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
     category: '',
     start_date: '',
     end_date: '',
-    event_link: ''
-  });
-  const [files, setFiles] = useState({
-    poster: null as File | null,
-    image1: null as File | null,
-    image2: null as File | null,
-    image3: null as File | null
+    event_link: '',
+    poster_url: '',
+    image_url_1: '',
+    image_url_2: '',
+    image_url_3: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -47,9 +45,6 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleFileChange = (field: string, file: File | null) => {
-    setFiles(prev => ({ ...prev, [field]: file }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,12 +70,13 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
     setIsSubmitting(true);
 
     try {
+      const { poster_url, image_url_1, image_url_2, image_url_3, ...restFormData } = formData;
       const eventData = {
-        ...formData,
+        ...restFormData,
         location_lat: selectedLocation.lat,
         location_lng: selectedLocation.lng,
-        poster: files.poster,
-        images: [files.image1, files.image2, files.image3].filter(Boolean)
+        poster_url: poster_url || null,
+        image_urls: [image_url_1, image_url_2, image_url_3].filter(url => url.trim() !== '')
       };
 
       await onSubmit(eventData);
@@ -93,13 +89,11 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
         category: '',
         start_date: '',
         end_date: '',
-        event_link: ''
-      });
-      setFiles({
-        poster: null,
-        image1: null,
-        image2: null,
-        image3: null
+        event_link: '',
+        poster_url: '',
+        image_url_1: '',
+        image_url_2: '',
+        image_url_3: ''
       });
       
       onClose();
@@ -233,28 +227,28 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
             )}
           </div>
 
-          {/* File Uploads */}
+          {/* Image URLs */}
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="poster">Main Poster Image</Label>
+              <Label htmlFor="poster_url">Main Poster Image URL (Optional)</Label>
               <Input
-                id="poster"
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleFileChange('poster', e.target.files?.[0] || null)}
-                className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                id="poster_url"
+                type="url"
+                value={formData.poster_url}
+                onChange={(e) => handleInputChange('poster_url', e.target.value)}
+                placeholder="https://example.com/poster.jpg"
               />
             </div>
 
             <div className="space-y-2">
-              <Label>Additional Images (up to 3)</Label>
+              <Label>Additional Image URLs (Optional)</Label>
               {[1, 2, 3].map((num) => (
                 <Input
                   key={num}
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFileChange(`image${num}`, e.target.files?.[0] || null)}
-                  className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-secondary/50 file:text-secondary-foreground hover:file:bg-secondary/70"
+                  type="url"
+                  value={formData[`image_url_${num}` as keyof typeof formData]}
+                  onChange={(e) => handleInputChange(`image_url_${num}`, e.target.value)}
+                  placeholder={`https://example.com/image${num}.jpg`}
                 />
               ))}
             </div>
