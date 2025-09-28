@@ -25,8 +25,18 @@ const Auth = () => {
     email: '',
     password: ''
   });
+  const [tab, setTab] = useState<'signin' | 'signup' | 'admin'>('signin');
 
   useEffect(() => {
+    // Initialize tab from URL (#admin or ?tab=admin)
+    const hash = window.location.hash.replace('#', '');
+    const params = new URLSearchParams(window.location.search);
+    const qp = params.get('tab');
+    const initial = (qp || hash) as 'signin' | 'signup' | 'admin' | null;
+    if (initial && ['signin', 'signup', 'admin'].includes(initial)) {
+      setTab(initial as 'signin' | 'signup' | 'admin');
+    }
+
     // Check if user is already logged in
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -241,7 +251,7 @@ const Auth = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="signin" className="w-full">
+            <Tabs value={tab} onValueChange={(v) => setTab(v as 'signin' | 'signup' | 'admin')} className="w-full">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="signin">Sign In</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>

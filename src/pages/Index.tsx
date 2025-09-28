@@ -59,15 +59,26 @@ const Index = () => {
       });
     }
 
-    // Listen for auth changes (only for regular users)
+    // Listen for auth changes (preserve admin session if active)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        // Clear admin session if regular user signs in
+      (_event, session) => {
         if (session) {
+          // Regular user signed in: clear admin session and set user
           localStorage.removeItem('adminSession');
           localStorage.removeItem('adminEmail');
+          setUser(session.user);
+          setShowAdminPanel(false);
+          return;
         }
-        setUser(session?.user ?? null);
+        // No Supabase session; preserve admin session if present
+        const isAdminSession = localStorage.getItem('adminSession') === 'true';
+        const adminEmail = localStorage.getItem('adminEmail');
+        if (isAdminSession && adminEmail) {
+          setUser({ id: 'admin', email: adminEmail });
+          setShowAdminPanel(true);
+        } else {
+          setUser(null);
+        }
       }
     );
 
@@ -316,13 +327,23 @@ const Index = () => {
               </Button>
             </div>
           ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLogin}
-            >
-              <LogIn className="w-4 h-4" />
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogin}
+              >
+                <LogIn className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => { window.location.href = '/auth#admin'; }}
+                aria-label="Admin login"
+              >
+                Admin
+              </Button>
+            </div>
           )}
         </div>
 
