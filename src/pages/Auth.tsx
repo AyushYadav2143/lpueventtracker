@@ -20,6 +20,11 @@ const Auth = () => {
     full_name: '',
     reg_id: ''
   });
+  
+  const [adminFormData, setAdminFormData] = useState({
+    email: '',
+    password: ''
+  });
 
   useEffect(() => {
     // Check if user is already logged in
@@ -36,43 +41,16 @@ const Auth = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleAdminInputChange = (field: string, value: string) => {
+    setAdminFormData(prev => ({ ...prev, [field]: value }));
+  };
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      console.log('Attempting login with:', formData.email); // Debug log
-      
-      // Check if this is admin login first
-      const { data: isAdmin, error: adminError } = await supabase.rpc('verify_admin_credentials', {
-        input_email: formData.email,
-        input_password: formData.password
-      });
-
-      console.log('Admin verification result:', { isAdmin, adminError }); // Debug log
-
-      if (adminError) {
-        console.error('Admin verification error:', adminError);
-      }
-
-      if (isAdmin) {
-        // For admin login, we'll create a special session indicator
-        console.log('Admin login successful, setting localStorage'); // Debug log
-        localStorage.setItem('adminSession', 'true');
-        localStorage.setItem('adminEmail', formData.email);
-        
-        toast({
-          title: "Welcome Admin!",
-          description: "You have been signed in as administrator.",
-        });
-
-        console.log('Navigating to home page'); // Debug log
-        navigate('/');
-        return;
-      }
-
-      // Regular user login
-      console.log('Attempting regular user login'); // Debug log
+      // Regular user login only
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
@@ -99,6 +77,47 @@ const Auth = () => {
       toast({
         title: "Sign In Failed",
         description: message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      // Check admin credentials
+      const { data: isAdmin, error: adminError } = await supabase.rpc('verify_admin_credentials', {
+        input_email: adminFormData.email,
+        input_password: adminFormData.password
+      });
+
+      if (adminError) {
+        throw new Error('Failed to verify admin credentials');
+      }
+
+      if (!isAdmin) {
+        throw new Error('Invalid admin credentials');
+      }
+
+      // Set admin session
+      localStorage.setItem('adminSession', 'true');
+      localStorage.setItem('adminEmail', adminFormData.email);
+      
+      toast({
+        title: "Welcome Admin!",
+        description: "You have been signed in as administrator.",
+      });
+
+      navigate('/');
+    } catch (error: any) {
+      console.error('Admin login error:', error);
+      toast({
+        title: "Admin Login Failed",
+        description: error.message || "Invalid admin credentials",
         variant: "destructive"
       });
     } finally {
@@ -223,9 +242,10 @@ const Auth = () => {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="signin" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="signin">Sign In</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                <TabsTrigger value="admin">Admin</TabsTrigger>
               </TabsList>
 
               <TabsContent value="signin">
@@ -354,6 +374,53 @@ const Auth = () => {
 
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? 'Creating account...' : 'Create Account'}
+                  </Button>
+                </form>
+              </TabsContent>
+
+              <TabsContent value="admin">
+                <form onSubmit={handleAdminLogin} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="admin-email">Admin Email</Label>
+                    <Input
+                      id="admin-email"
+                      type="email"
+                      placeholder="admin@gmail.com"
+                      value={adminFormData.email}
+                      onChange={(e) => handleAdminInputChange('email', e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="admin-password">Admin Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="admin-password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Enter admin password"
+                        value={adminFormData.password}
+                        onChange={(e) => handleAdminInputChange('password', e.target.value)}
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? 'Signing in...' : 'Admin Sign In'}
                   </Button>
                 </form>
               </TabsContent>
