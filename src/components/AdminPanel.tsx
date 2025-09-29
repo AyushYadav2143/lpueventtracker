@@ -27,9 +27,10 @@ interface Event {
 interface AdminPanelProps {
   isOpen: boolean;
   onClose: () => void;
+  onEventStatusChange: () => void;
 }
 
-const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
+const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, onEventStatusChange }) => {
   const { toast } = useToast();
   const [pendingEvents, setPendingEvents] = useState<Event[]>([]);
   const [approvedEvents, setApprovedEvents] = useState<Event[]>([]);
@@ -141,6 +142,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
 
       fetchEvents();
       fetchAnalytics();
+      onEventStatusChange(); // Refresh main event list
     } catch (error) {
       console.error('Error approving event:', error);
       toast({
@@ -174,6 +176,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose }) => {
 
       fetchEvents();
       fetchAnalytics();
+      onEventStatusChange(); // Refresh main event list
     } catch (error) {
       console.error('Error rejecting event:', error);
       toast({

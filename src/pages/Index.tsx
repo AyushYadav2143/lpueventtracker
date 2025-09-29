@@ -401,6 +401,7 @@ const Index = () => {
         <AdminPanel
           isOpen={showAdminPanel}
           onClose={() => setShowAdminPanel(false)}
+          onEventStatusChange={fetchApprovedEvents}
         />
       )}
     </div>
