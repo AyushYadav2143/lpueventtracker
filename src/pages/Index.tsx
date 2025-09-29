@@ -118,34 +118,52 @@ const Index = () => {
   };
 
   const handleEventSubmit = async (eventData: any) => {
-    if (!user) {
+    // Require a real Supabase-authenticated user (adminSession is not allowed for submissions)
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session?.user?.id) {
       toast({
-        title: "Authentication Required",
-        description: "Please log in to submit events.",
-        variant: "destructive"
+        title: "Login Required",
+        description: "Please sign in with a user account to submit an event.",
+        variant: "destructive",
       });
       return;
     }
 
     try {
-      const { data, error } = await supabase
+      const startDate = eventData.start_date;
+      const endDate = eventData.end_date && String(eventData.end_date).trim() !== ''
+        ? eventData.end_date
+        : startDate; // DB requires end_date; default to start_date if empty
+
+      const payload = {
+        ...eventData,
+        start_date: startDate,
+        end_date: endDate,
+        event_link: eventData.event_link?.trim() ? eventData.event_link.trim() : null,
+        created_by: session.user.id, // must be a UUID matching auth.uid() for RLS
+        status: 'pending',
+      };
+
+      const { error } = await supabase
         .from('events')
-        .insert([{
-          ...eventData,
-          created_by: user.id,
-          status: 'pending'
-        }]);
+        .insert([payload]);
 
       if (error) throw error;
 
       toast({
         title: "Event Submitted",
-        description: "Your event has been submitted for approval.",
+        description: "Your event has been submitted for admin approval.",
       });
 
       setSelectedLocation(null);
     } catch (error) {
       console.error('Error submitting event:', error);
+      toast({
+        title: "Submission Failed",
+        description: "Could not submit your event. Please try again.",
+        variant: "destructive",
+      });
       throw error;
     }
   };
