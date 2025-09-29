@@ -42,6 +42,11 @@ const Auth = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         navigate('/');
+        return;
+      }
+      const local = localStorage.getItem('localUserSession');
+      if (local) {
+        navigate('/');
       }
     };
     checkUser();
@@ -60,34 +65,27 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      // Regular user login only
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password,
-      });
+      const users = JSON.parse(localStorage.getItem('localUsers') || '[]');
+      const found = users.find((u: any) => u.email === formData.email && u.password === formData.password);
 
-      if (error) throw error;
+      if (!found) {
+        throw new Error('Invalid email or password.');
+      }
+
+      localStorage.setItem('localUserSession', JSON.stringify({ id: found.id, email: found.email, full_name: found.full_name }));
 
       toast({
-        title: "Welcome back!",
-        description: "You have been signed in successfully.",
+        title: 'Welcome back!',
+        description: 'You have been signed in successfully.',
       });
 
       navigate('/');
     } catch (error: any) {
       console.error('Sign in error:', error);
-      let message = 'Failed to sign in. Please try again.';
-      
-      if (error.message?.includes('Invalid login credentials')) {
-        message = 'Invalid email or password. Please check your credentials.';
-      } else if (error.message?.includes('Email not confirmed')) {
-        message = 'Please check your email and click the confirmation link.';
-      }
-      
       toast({
-        title: "Sign In Failed",
-        description: message,
-        variant: "destructive"
+        title: 'Sign In Failed',
+        description: error.message || 'Failed to sign in. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -144,48 +142,35 @@ const Auth = () => {
         throw new Error('Password must be at least 6 characters long');
       }
 
-      const redirectUrl = `${window.location.origin}/`;
-      
-      const { data, error } = await supabase.auth.signUp({
+      const users = JSON.parse(localStorage.getItem('localUsers') || '[]');
+      const exists = users.some((u: any) => u.email === formData.email);
+      if (exists) {
+        throw new Error('An account with this email already exists. Please sign in instead.');
+      }
+
+      const id = (crypto && 'randomUUID' in crypto) ? (crypto as any).randomUUID() : `local-${Date.now()}`;
+      const newUser = {
+        id,
         email: formData.email,
         password: formData.password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            full_name: formData.full_name,
-            reg_id: formData.reg_id
-          }
-        }
+        full_name: formData.full_name,
+        reg_id: formData.reg_id,
+      };
+
+      localStorage.setItem('localUsers', JSON.stringify([...users, newUser]));
+      localStorage.setItem('localUserSession', JSON.stringify({ id, email: newUser.email, full_name: newUser.full_name }));
+
+      toast({
+        title: 'Welcome!',
+        description: 'Your account has been created and you are signed in.',
       });
-
-      if (error) throw error;
-
-      if (data.user && !data.session) {
-        toast({
-          title: "Check your email",
-          description: "We've sent you a confirmation link. Please check your email and click the link to complete your registration.",
-        });
-      } else {
-        toast({
-          title: "Welcome!",
-          description: "Your account has been created successfully.",
-        });
-        navigate('/');
-      }
+      navigate('/');
     } catch (error: any) {
       console.error('Sign up error:', error);
-      let message = 'Failed to create account. Please try again.';
-      
-      if (error.message?.includes('User already registered')) {
-        message = 'An account with this email already exists. Please sign in instead.';
-      } else if (error.message?.includes('Password')) {
-        message = error.message;
-      }
-      
       toast({
-        title: "Sign Up Failed",
-        description: message,
-        variant: "destructive"
+        title: 'Sign Up Failed',
+        description: error.message || 'Failed to create account. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);

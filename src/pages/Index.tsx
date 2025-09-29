@@ -55,7 +55,16 @@ const Index = () => {
     } else {
       // Check regular Supabase auth state
       supabase.auth.getSession().then(({ data: { session } }) => {
-        setUser(session?.user ?? null);
+        if (session?.user) {
+          setUser(session.user);
+        } else {
+          const local = localStorage.getItem('localUserSession');
+          if (local) {
+            try { setUser(JSON.parse(local)); } catch { setUser(null); }
+          } else {
+            setUser(null);
+          }
+        }
       });
     }
 
@@ -77,7 +86,12 @@ const Index = () => {
           setUser({ id: 'admin', email: adminEmail });
           setShowAdminPanel(true);
         } else {
-          setUser(null);
+          const local = localStorage.getItem('localUserSession');
+          if (local) {
+            try { setUser(JSON.parse(local)); } catch { setUser(null); }
+          } else {
+            setUser(null);
+          }
         }
       }
     );
@@ -118,36 +132,22 @@ const Index = () => {
   };
 
   const handleEventSubmit = async (eventData: any) => {
-    // Require a real Supabase-authenticated user (adminSession is not allowed for submissions)
-    const { data: { session } } = await supabase.auth.getSession();
-
-    if (!session?.user?.id) {
-      toast({
-        title: "Login Required",
-        description: "Please sign in with a user account to submit an event.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       const startDate = eventData.start_date;
       const endDate = eventData.end_date && String(eventData.end_date).trim() !== ''
         ? eventData.end_date
-        : startDate; // DB requires end_date; default to start_date if empty
+        : startDate;
 
       const payload = {
         ...eventData,
         start_date: startDate,
         end_date: endDate,
         event_link: eventData.event_link?.trim() ? eventData.event_link.trim() : null,
-        created_by: session.user.id, // must be a UUID matching auth.uid() for RLS
-        status: 'pending',
       };
 
-      const { error } = await supabase
-        .from('events')
-        .insert([payload]);
+      const { data, error } = await supabase.functions.invoke('submit-event', {
+        body: payload,
+      });
 
       if (error) throw error;
 
@@ -296,14 +296,19 @@ const Index = () => {
 
   const handleLogout = async () => {
     const isAdmin = localStorage.getItem('adminSession') === 'true';
+    const localUser = localStorage.getItem('localUserSession');
     
     if (isAdmin) {
       // Clear admin session
       localStorage.removeItem('adminSession');
       localStorage.removeItem('adminEmail');
       setUser(null);
+    } else if (localUser) {
+      // Clear local user session
+      localStorage.removeItem('localUserSession');
+      setUser(null);
     } else {
-      // Regular user logout
+      // Regular Supabase user logout
       await supabase.auth.signOut();
     }
     
