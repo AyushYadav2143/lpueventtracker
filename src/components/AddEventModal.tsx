@@ -33,13 +33,11 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
     category: '',
     start_date: '',
     end_date: '',
-    event_link: '',
-    poster_url: '',
-    image_url_1: '',
-    image_url_2: '',
-    image_url_3: ''
+    event_link: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [posterFile, setPosterFile] = useState<File | null>(null);
+  const [additionalFiles, setAdditionalFiles] = useState<File[]>([]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -70,13 +68,43 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
     setIsSubmitting(true);
 
     try {
-      const { poster_url, image_url_1, image_url_2, image_url_3, ...restFormData } = formData;
+      // Upload images to Supabase Storage
+      const { supabase } = await import('@/integrations/supabase/client');
+      const uploadedImageUrls: string[] = [];
+      let posterUrl = '';
+
+      // Upload poster image
+      if (posterFile) {
+        const posterPath = `${Date.now()}_${posterFile.name}`;
+        const { error: posterError } = await supabase.storage
+          .from('event-images')
+          .upload(posterPath, posterFile);
+        
+        if (!posterError) {
+          const { data } = supabase.storage.from('event-images').getPublicUrl(posterPath);
+          posterUrl = data.publicUrl;
+        }
+      }
+
+      // Upload additional images
+      for (const file of additionalFiles) {
+        const filePath = `${Date.now()}_${file.name}`;
+        const { error } = await supabase.storage
+          .from('event-images')
+          .upload(filePath, file);
+        
+        if (!error) {
+          const { data } = supabase.storage.from('event-images').getPublicUrl(filePath);
+          uploadedImageUrls.push(data.publicUrl);
+        }
+      }
+
       const eventData = {
-        ...restFormData,
+        ...formData,
         location_lat: selectedLocation.lat,
         location_lng: selectedLocation.lng,
-        poster_url: poster_url || null,
-        image_urls: [image_url_1, image_url_2, image_url_3].filter(url => url.trim() !== '')
+        poster_url: posterUrl || null,
+        image_urls: uploadedImageUrls
       };
 
       await onSubmit(eventData);
@@ -89,12 +117,10 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
         category: '',
         start_date: '',
         end_date: '',
-        event_link: '',
-        poster_url: '',
-        image_url_1: '',
-        image_url_2: '',
-        image_url_3: ''
+        event_link: ''
       });
+      setPosterFile(null);
+      setAdditionalFiles([]);
       
       onClose();
       
@@ -227,30 +253,43 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
             )}
           </div>
 
-          {/* Image URLs */}
+          {/* Image Upload */}
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="poster_url">Main Poster Image URL (Optional)</Label>
+              <Label htmlFor="poster_file">Main Poster Image (Optional)</Label>
               <Input
-                id="poster_url"
-                type="url"
-                value={formData.poster_url}
-                onChange={(e) => handleInputChange('poster_url', e.target.value)}
-                placeholder="https://example.com/poster.jpg"
+                id="poster_file"
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) setPosterFile(file);
+                }}
               />
+              {posterFile && (
+                <p className="text-sm text-muted-foreground">
+                  Selected: {posterFile.name}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
-              <Label>Additional Image URLs (Optional)</Label>
-              {[1, 2, 3].map((num) => (
-                <Input
-                  key={num}
-                  type="url"
-                  value={formData[`image_url_${num}` as keyof typeof formData]}
-                  onChange={(e) => handleInputChange(`image_url_${num}`, e.target.value)}
-                  placeholder={`https://example.com/image${num}.jpg`}
-                />
-              ))}
+              <Label htmlFor="additional_files">Additional Images (Optional, max 3)</Label>
+              <Input
+                id="additional_files"
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => {
+                  const files = Array.from(e.target.files || []).slice(0, 3);
+                  setAdditionalFiles(files);
+                }}
+              />
+              {additionalFiles.length > 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Selected: {additionalFiles.map(f => f.name).join(', ')}
+                </p>
+              )}
             </div>
           </div>
 

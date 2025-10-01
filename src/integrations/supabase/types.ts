@@ -14,67 +14,10 @@ export type Database = {
   }
   public: {
     Tables: {
-      admin_credentials: {
-        Row: {
-          created_at: string
-          email: string
-          id: string
-          password_hash: string
-          role: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          id?: string
-          password_hash: string
-          role?: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          id?: string
-          password_hash?: string
-          role?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      event_registrations: {
-        Row: {
-          created_at: string | null
-          event_id: string | null
-          id: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          event_id?: string | null
-          id?: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          event_id?: string | null
-          id?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "event_registrations_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       events: {
         Row: {
           category: string
           created_at: string | null
-          created_by: string | null
           description: string
           end_date: string
           event_link: string | null
@@ -86,12 +29,13 @@ export type Database = {
           poster_url: string | null
           start_date: string
           status: string | null
+          submitter_email: string | null
+          submitter_name: string | null
           title: string
         }
         Insert: {
           category: string
           created_at?: string | null
-          created_by?: string | null
           description: string
           end_date: string
           event_link?: string | null
@@ -103,12 +47,13 @@ export type Database = {
           poster_url?: string | null
           start_date: string
           status?: string | null
+          submitter_email?: string | null
+          submitter_name?: string | null
           title: string
         }
         Update: {
           category?: string
           created_at?: string | null
-          created_by?: string | null
           description?: string
           end_date?: string
           event_link?: string | null
@@ -120,66 +65,9 @@ export type Database = {
           poster_url?: string | null
           start_date?: string
           status?: string | null
+          submitter_email?: string | null
+          submitter_name?: string | null
           title?: string
-        }
-        Relationships: []
-      }
-      saved_events: {
-        Row: {
-          created_at: string | null
-          event_id: string | null
-          id: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          event_id?: string | null
-          id?: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          event_id?: string | null
-          id?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "saved_events_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_profiles: {
-        Row: {
-          created_at: string | null
-          email: string | null
-          full_name: string | null
-          id: string
-          reg_id: string | null
-          role: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          email?: string | null
-          full_name?: string | null
-          id: string
-          reg_id?: string | null
-          role?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          email?: string | null
-          full_name?: string | null
-          id?: string
-          reg_id?: string | null
-          role?: string | null
-          updated_at?: string | null
         }
         Relationships: []
       }
@@ -189,15 +77,14 @@ export type Database = {
     }
     Functions: {
       admin_delete_event: {
-        Args: { _email: string; _event_id: string; _password: string }
+        Args: { _event_id: string }
         Returns: undefined
       }
       admin_list_events: {
-        Args: { _email: string; _password: string; _status: string }
+        Args: { _status: string }
         Returns: {
           category: string
           created_at: string | null
-          created_by: string | null
           description: string
           end_date: string
           event_link: string | null
@@ -209,21 +96,14 @@ export type Database = {
           poster_url: string | null
           start_date: string
           status: string | null
+          submitter_email: string | null
+          submitter_name: string | null
           title: string
         }[]
       }
       admin_update_event_status: {
-        Args: {
-          _email: string
-          _event_id: string
-          _new_status: string
-          _password: string
-        }
+        Args: { _event_id: string; _new_status: string }
         Returns: undefined
-      }
-      verify_admin_credentials: {
-        Args: { input_email: string; input_password: string }
-        Returns: boolean
       }
     }
     Enums: {

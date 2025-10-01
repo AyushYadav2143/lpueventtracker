@@ -21,7 +21,6 @@ interface Event {
   poster_url?: string;
   status: string;
   created_at: string;
-  created_by: string;
 }
 
 interface AdminPanelProps {
@@ -58,20 +57,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, onEventStatusC
         throw new Error('Admin credentials not found');
       }
       
-      // Fetch pending events using admin credentials
+      // Fetch pending events
       const { data: pending, error: pendingError } = await supabase.rpc('admin_list_events', {
-        _status: 'pending',
-        _email: adminEmail,
-        _password: '214365'
+        _status: 'pending'
       });
 
       if (pendingError) throw pendingError;
 
       // Fetch approved events  
       const { data: approved, error: approvedError } = await supabase.rpc('admin_list_events', {
-        _status: 'approved',
-        _email: adminEmail,
-        _password: '214365'
+        _status: 'approved'
       });
 
       if (approvedError) throw approvedError;
@@ -127,9 +122,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, onEventStatusC
 
       const { error } = await supabase.rpc('admin_update_event_status', {
         _event_id: eventId,
-        _new_status: 'approved',
-        _email: adminEmail,
-        _password: '214365'
+        _new_status: 'approved'
       });
 
       if (error) throw error;
@@ -161,9 +154,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, onEventStatusC
       }
 
       const { error } = await supabase.rpc('admin_delete_event', {
-        _event_id: eventId,
-        _email: adminEmail,
-        _password: '214365'
+        _event_id: eventId
       });
 
       if (error) throw error;

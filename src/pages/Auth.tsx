@@ -97,17 +97,8 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      // Check admin credentials
-      const { data: isAdmin, error: adminError } = await supabase.rpc('verify_admin_credentials', {
-        input_email: adminFormData.email,
-        input_password: adminFormData.password
-      });
-
-      if (adminError) {
-        throw new Error('Failed to verify admin credentials');
-      }
-
-      if (!isAdmin) {
+      // Simple admin credential check
+      if (adminFormData.email !== 'admin@gmail.com' || adminFormData.password !== '214365') {
         throw new Error('Invalid admin credentials');
       }
 

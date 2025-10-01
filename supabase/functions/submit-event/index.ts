@@ -22,6 +22,8 @@ interface SubmitEventRequest {
   location_lng: number;
   poster_url?: string | null;
   image_urls?: string[];
+  submitter_name?: string;
+  submitter_email?: string;
 }
 
 serve(async (req: Request) => {
@@ -72,7 +74,8 @@ serve(async (req: Request) => {
       location_lng: Number(payload.location_lng),
       poster_url: payload.poster_url ?? null,
       image_urls: Array.isArray(payload.image_urls) ? payload.image_urls.filter((u) => typeof u === "string" && u.trim() !== "") : [],
-      created_by: null, // No Supabase auth required; allow null
+      submitter_name: payload.submitter_name ?? null,
+      submitter_email: payload.submitter_email ?? null,
       status: "pending", // Always pending for admin review
     };
 

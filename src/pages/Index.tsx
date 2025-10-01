@@ -169,47 +169,10 @@ const Index = () => {
   };
 
   const handleRegister = async (eventId: string) => {
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to register for events.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('event_registrations')
-        .insert([{
-          event_id: eventId,
-          user_id: user.id
-        }]);
-
-      if (error) {
-        if (error.code === '23505') {
-          toast({
-            title: "Already Registered",
-            description: "You are already registered for this event.",
-            variant: "destructive"
-          });
-        } else {
-          throw error;
-        }
-      } else {
-        toast({
-          title: "Registration Successful",
-          description: "You have been registered for the event.",
-        });
-      }
-    } catch (error) {
-      console.error('Error registering for event:', error);
-      toast({
-        title: "Registration Failed",
-        description: "Failed to register for the event.",
-        variant: "destructive"
-      });
-    }
+    toast({
+      title: "Event Registration",
+      description: "Please contact the event organizer directly to register.",
+    });
   };
 
   const handleSaveToggle = (eventId: string) => {

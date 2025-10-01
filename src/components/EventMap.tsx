@@ -12,6 +12,8 @@ interface Event {
   location_lng: number;
   start_date: string;
   poster_url?: string;
+  image_urls?: string[];
+  event_link?: string;
   status: string;
 }
 
@@ -102,29 +104,42 @@ const EventMap: React.FC<EventMapProps> = ({
         if (event.location_lat && event.location_lng) {
           const categoryStyle = categoryStyles[event.category as keyof typeof categoryStyles] || categoryStyles.default;
           
+          // Create image slideshow HTML
+          const allImages = [
+            event.poster_url,
+            ...(event.image_urls || [])
+          ].filter(Boolean);
+
+          const imageSlideshow = allImages.length > 0 
+            ? `
+              <div class="slideshow-container mb-3">
+                ${allImages.map((img, idx) => `
+                  <div class="slide ${idx === 0 ? 'active' : ''}" style="display: ${idx === 0 ? 'block' : 'none'}">
+                    <img src="${img}" alt="${event.title}" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px;" />
+                  </div>
+                `).join('')}
+                ${allImages.length > 1 ? `
+                  <button class="prev" onclick="changeSlide(this, -1)" style="position: absolute; top: 50%; left: 10px; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; padding: 8px 12px; cursor: pointer; border-radius: 4px;">❮</button>
+                  <button class="next" onclick="changeSlide(this, 1)" style="position: absolute; top: 50%; right: 10px; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; padding: 8px 12px; cursor: pointer; border-radius: 4px;">❯</button>
+                ` : ''}
+              </div>
+            `
+            : '';
+          
           const marker = L.marker([event.location_lat, event.location_lng])
             .addTo(mapInstanceRef.current!)
             .bindPopup(`
-              <div class="p-3 min-w-[280px]">
+              <div class="p-3 min-w-[320px] max-w-[400px]" style="position: relative;">
+                ${imageSlideshow}
                 <h3 class="font-bold text-lg mb-2">${event.title}</h3>
-                <p class="text-sm text-gray-600 mb-2">by ${event.organizer}</p>
-                <p class="text-sm mb-2">${new Date(event.start_date).toLocaleDateString()}</p>
-                <div class="flex gap-2 mt-3">
-                  <button 
-                    onclick="handleEventRegister('${event.id}')" 
-                    class="bg-primary hover:bg-primary/90 text-white px-3 py-1 rounded text-sm"
-                  >
-                    Register
-                  </button>
-                  <button 
-                    onclick="handleEventSave('${event.id}')" 
-                    class="bg-secondary hover:bg-secondary/80 text-secondary-foreground px-3 py-1 rounded text-sm"
-                  >
-                    Save
-                  </button>
-                </div>
+                <p class="text-sm text-gray-600 mb-1">by ${event.organizer}</p>
+                <p class="text-sm text-gray-500 mb-2">${new Date(event.start_date).toLocaleDateString()}</p>
+                <p class="text-sm mb-3">${event.description.substring(0, 100)}${event.description.length > 100 ? '...' : ''}</p>
+                ${event.event_link ? `
+                  <a href="${event.event_link}" target="_blank" class="text-primary hover:underline text-sm block mb-2">View Event Details →</a>
+                ` : ''}
               </div>
-            `, { maxWidth: 300 });
+            `, { maxWidth: 400, minWidth: 320 });
 
           markersRef.current.push(marker);
 
@@ -133,6 +148,23 @@ const EventMap: React.FC<EventMapProps> = ({
           }
         }
       });
+
+      // Add slideshow navigation function to window
+      if (!('changeSlide' in window)) {
+        (window as any).changeSlide = function(btn: HTMLElement, direction: number) {
+          const container = btn.closest('.slideshow-container');
+          if (!container) return;
+          
+          const slides = container.querySelectorAll('.slide');
+          let currentIndex = Array.from(slides).findIndex(slide => 
+            (slide as HTMLElement).style.display === 'block'
+          );
+          
+          slides[currentIndex].setAttribute('style', 'display: none;');
+          currentIndex = (currentIndex + direction + slides.length) % slides.length;
+          slides[currentIndex].setAttribute('style', 'display: block;');
+        };
+      }
     }
   }, [events, onEventClick]);
 
