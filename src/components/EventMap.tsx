@@ -59,13 +59,6 @@ const EventMap: React.FC<EventMapProps> = ({
         attribution: '© OpenStreetMap contributors'
       }).addTo(mapInstanceRef.current);
 
-      // Add click handler for location picking
-      mapInstanceRef.current.on('click', (e) => {
-        if (isPickingLocation && onLocationPick) {
-          onLocationPick(e.latlng.lat, e.latlng.lng);
-        }
-      });
-
       setTimeout(() => {
         mapInstanceRef.current?.invalidateSize();
       }, 100);
@@ -78,6 +71,23 @@ const EventMap: React.FC<EventMapProps> = ({
       }
     };
   }, []);
+
+  // Handle location picking separately
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+
+    const handleMapClick = (e: L.LeafletMouseEvent) => {
+      if (isPickingLocation && onLocationPick) {
+        onLocationPick(e.latlng.lat, e.latlng.lng);
+      }
+    };
+
+    mapInstanceRef.current.on('click', handleMapClick);
+
+    return () => {
+      mapInstanceRef.current?.off('click', handleMapClick);
+    };
+  }, [isPickingLocation, onLocationPick]);
 
   useEffect(() => {
     if (mapInstanceRef.current) {

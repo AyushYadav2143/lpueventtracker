@@ -51,7 +51,7 @@ const Index = () => {
     
     if (adminSession === 'true' && adminEmail) {
       setUser({ id: 'admin', email: adminEmail });
-      setShowAdminPanel(true); // Automatically open admin panel for admin login
+      // Don't auto-open admin panel, let user click the button
     } else {
       // Check regular Supabase auth state
       supabase.auth.getSession().then(({ data: { session } }) => {
@@ -84,7 +84,7 @@ const Index = () => {
         const adminEmail = localStorage.getItem('adminEmail');
         if (isAdminSession && adminEmail) {
           setUser({ id: 'admin', email: adminEmail });
-          setShowAdminPanel(true);
+          // Don't auto-open admin panel
         } else {
           const local = localStorage.getItem('localUserSession');
           if (local) {
