@@ -45,56 +45,18 @@ const Index = () => {
   const [isPickingLocation, setIsPickingLocation] = useState(false);
 
   useEffect(() => {
-    // Check for admin session first
-    const adminSession = localStorage.getItem('adminSession');
-    const adminEmail = localStorage.getItem('adminEmail');
-    
-    if (adminSession === 'true' && adminEmail) {
-      setUser({ id: 'admin', email: adminEmail });
-      // Don't auto-open admin panel, let user click the button
-    } else {
-      // Check regular Supabase auth state
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session?.user) {
-          setUser(session.user);
-        } else {
-          const local = localStorage.getItem('localUserSession');
-          if (local) {
-            try { setUser(JSON.parse(local)); } catch { setUser(null); }
-          } else {
-            setUser(null);
-          }
-        }
-      });
-    }
-
-    // Listen for auth changes (preserve admin session if active)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (session) {
-          // Regular user signed in: clear admin session and set user
-          localStorage.removeItem('adminSession');
-          localStorage.removeItem('adminEmail');
-          setUser(session.user);
-          setShowAdminPanel(false);
-          return;
-        }
-        // No Supabase session; preserve admin session if present
-        const isAdminSession = localStorage.getItem('adminSession') === 'true';
-        const adminEmail = localStorage.getItem('adminEmail');
-        if (isAdminSession && adminEmail) {
-          setUser({ id: 'admin', email: adminEmail });
-          // Don't auto-open admin panel
-        } else {
-          const local = localStorage.getItem('localUserSession');
-          if (local) {
-            try { setUser(JSON.parse(local)); } catch { setUser(null); }
-          } else {
-            setUser(null);
-          }
-        }
+    // Check for current user from localStorage
+    const currentUserStr = localStorage.getItem('currentUser');
+    if (currentUserStr) {
+      try {
+        const currentUser = JSON.parse(currentUserStr);
+        setUser({ id: currentUser.id, email: currentUser.email });
+      } catch {
+        setUser(null);
       }
-    );
+    } else {
+      setUser(null);
+    }
 
     // Load saved events from localStorage
     const saved = localStorage.getItem('savedLpuEvents');
@@ -103,8 +65,6 @@ const Index = () => {
     }
 
     fetchApprovedEvents();
-
-    return () => subscription.unsubscribe();
   }, []);
 
   const fetchApprovedEvents = async () => {
@@ -258,22 +218,8 @@ const Index = () => {
   };
 
   const handleLogout = async () => {
-    const isAdmin = localStorage.getItem('adminSession') === 'true';
-    const localUser = localStorage.getItem('localUserSession');
-    
-    if (isAdmin) {
-      // Clear admin session
-      localStorage.removeItem('adminSession');
-      localStorage.removeItem('adminEmail');
-      setUser(null);
-    } else if (localUser) {
-      // Clear local user session
-      localStorage.removeItem('localUserSession');
-      setUser(null);
-    } else {
-      // Regular Supabase user logout
-      await supabase.auth.signOut();
-    }
+    localStorage.removeItem('currentUser');
+    setUser(null);
     
     toast({
       title: "Signed Out",
@@ -282,7 +228,14 @@ const Index = () => {
   };
 
   const isAdmin = () => {
-    return localStorage.getItem('adminSession') === 'true';
+    const currentUserStr = localStorage.getItem('currentUser');
+    if (!currentUserStr) return false;
+    try {
+      const currentUser = JSON.parse(currentUserStr);
+      return currentUser.isAdmin === true || currentUser.type === 'admin';
+    } catch {
+      return false;
+    }
   };
 
   return (

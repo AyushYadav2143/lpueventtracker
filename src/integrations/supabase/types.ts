@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_credentials: {
+        Row: {
+          created_at: string | null
+          email: string
+          full_name: string
+          id: string
+          password_hash: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          full_name: string
+          id?: string
+          password_hash: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          password_hash?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           category: string
@@ -71,6 +95,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_credentials: {
+        Row: {
+          created_at: string | null
+          email: string
+          full_name: string
+          id: string
+          password_hash: string
+          registration_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          full_name: string
+          id?: string
+          password_hash: string
+          registration_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          password_hash?: string
+          registration_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -104,6 +155,23 @@ export type Database = {
       admin_update_event_status: {
         Args: { _event_id: string; _new_status: string }
         Returns: undefined
+      }
+      login_admin: {
+        Args: { _email: string; _password: string }
+        Returns: Json
+      }
+      login_user: {
+        Args: { _email: string; _password: string }
+        Returns: Json
+      }
+      register_user: {
+        Args: {
+          _email: string
+          _full_name: string
+          _password: string
+          _registration_id?: string
+        }
+        Returns: Json
       }
     }
     Enums: {

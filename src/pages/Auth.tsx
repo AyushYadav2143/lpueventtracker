@@ -38,18 +38,10 @@ const Auth = () => {
     }
 
     // Check if user is already logged in
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate('/');
-        return;
-      }
-      const local = localStorage.getItem('localUserSession');
-      if (local) {
-        navigate('/');
-      }
-    };
-    checkUser();
+    const currentUser = localStorage.getItem('currentUser');
+    if (currentUser) {
+      navigate('/');
+    }
   }, [navigate]);
 
   const handleInputChange = (field: string, value: string) => {
@@ -65,23 +57,32 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const users = JSON.parse(localStorage.getItem('localUsers') || '[]');
-      const found = users.find((u: any) => u.email === formData.email && u.password === formData.password);
-
-      if (!found) {
-        throw new Error('Invalid email or password.');
-      }
-
-      localStorage.setItem('localUserSession', JSON.stringify({ id: found.id, email: found.email, full_name: found.full_name }));
-
-      toast({
-        title: 'Welcome back!',
-        description: 'You have been signed in successfully.',
+      const { data, error } = await supabase.rpc('login_user', {
+        _email: formData.email,
+        _password: formData.password
       });
 
-      navigate('/');
+      if (error) throw error;
+
+      const result = data as any;
+      
+      if (result.success) {
+        localStorage.setItem('currentUser', JSON.stringify({
+          id: result.user_id,
+          email: result.email,
+          fullName: result.full_name,
+          registrationId: result.registration_id,
+          type: 'user'
+        }));
+        toast({
+          title: 'Welcome back!',
+          description: 'You have been signed in successfully.',
+        });
+        navigate('/');
+      } else {
+        throw new Error(result.error || 'Invalid credentials');
+      }
     } catch (error: any) {
-      console.error('Sign in error:', error);
       toast({
         title: 'Sign In Failed',
         description: error.message || 'Failed to sign in. Please try again.',
@@ -97,23 +98,32 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      // Simple admin credential check
-      if (adminFormData.email !== 'admin@gmail.com' || adminFormData.password !== '214365') {
-        throw new Error('Invalid admin credentials');
-      }
-
-      // Set admin session
-      localStorage.setItem('adminSession', 'true');
-      localStorage.setItem('adminEmail', adminFormData.email);
-      
-      toast({
-        title: "Welcome Admin!",
-        description: "You have been signed in as administrator.",
+      const { data, error } = await supabase.rpc('login_admin', {
+        _email: adminFormData.email,
+        _password: adminFormData.password
       });
 
-      navigate('/');
+      if (error) throw error;
+
+      const result = data as any;
+      
+      if (result.success) {
+        localStorage.setItem('currentUser', JSON.stringify({
+          id: result.admin_id,
+          email: result.email,
+          fullName: result.full_name,
+          isAdmin: true,
+          type: 'admin'
+        }));
+        toast({
+          title: "Welcome Admin!",
+          description: "You have been signed in as administrator.",
+        });
+        navigate('/');
+      } else {
+        throw new Error(result.error || 'Invalid admin credentials');
+      }
     } catch (error: any) {
-      console.error('Admin login error:', error);
       toast({
         title: "Admin Login Failed",
         description: error.message || "Invalid admin credentials",
@@ -133,31 +143,33 @@ const Auth = () => {
         throw new Error('Password must be at least 6 characters long');
       }
 
-      const users = JSON.parse(localStorage.getItem('localUsers') || '[]');
-      const exists = users.some((u: any) => u.email === formData.email);
-      if (exists) {
-        throw new Error('An account with this email already exists. Please sign in instead.');
-      }
-
-      const id = (crypto && 'randomUUID' in crypto) ? (crypto as any).randomUUID() : `local-${Date.now()}`;
-      const newUser = {
-        id,
-        email: formData.email,
-        password: formData.password,
-        full_name: formData.full_name,
-        reg_id: formData.reg_id,
-      };
-
-      localStorage.setItem('localUsers', JSON.stringify([...users, newUser]));
-      localStorage.setItem('localUserSession', JSON.stringify({ id, email: newUser.email, full_name: newUser.full_name }));
-
-      toast({
-        title: 'Welcome!',
-        description: 'Your account has been created and you are signed in.',
+      const { data, error } = await supabase.rpc('register_user', {
+        _email: formData.email,
+        _password: formData.password,
+        _full_name: formData.full_name,
+        _registration_id: formData.reg_id || null
       });
-      navigate('/');
+
+      if (error) throw error;
+
+      const result = data as any;
+      
+      if (result.success) {
+        localStorage.setItem('currentUser', JSON.stringify({
+          id: result.user_id,
+          email: result.email,
+          fullName: result.full_name,
+          type: 'user'
+        }));
+        toast({
+          title: 'Welcome!',
+          description: 'Your account has been created and you are signed in.',
+        });
+        navigate('/');
+      } else {
+        throw new Error(result.error || 'Failed to create account');
+      }
     } catch (error: any) {
-      console.error('Sign up error:', error);
       toast({
         title: 'Sign Up Failed',
         description: error.message || 'Failed to create account. Please try again.',
@@ -169,40 +181,10 @@ const Auth = () => {
   };
 
   const handleForgotPassword = async () => {
-    if (!formData.email) {
-      toast({
-        title: "Email Required",
-        description: "Please enter your email address first.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(
-        formData.email,
-        {
-          redirectTo: `${window.location.origin}/auth`
-        }
-      );
-
-      if (error) throw error;
-
-      toast({
-        title: "Reset Link Sent",
-        description: "Check your email for a password reset link.",
-      });
-    } catch (error: any) {
-      console.error('Password reset error:', error);
-      toast({
-        title: "Reset Failed",
-        description: error.message || "Failed to send reset email.",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
+    toast({
+      title: "Password Reset",
+      description: "Please contact the administrator to reset your password at admin@campusevents.com",
+    });
   };
 
   return (
@@ -414,7 +396,7 @@ const Auth = () => {
 
             <div className="mt-4 text-center text-sm text-muted-foreground">
               <p>For demo purposes:</p>
-              <p className="text-xs">Admin login: admin@gmail.com / 214365</p>
+              <p className="text-xs">Admin: admin@campusevents.com / admin123</p>
             </div>
           </CardContent>
         </Card>
