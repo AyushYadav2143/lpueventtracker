@@ -98,20 +98,19 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.rpc('login_admin', {
-        _email: adminFormData.email,
-        _password: adminFormData.password
+      // Use Supabase Auth for admin login
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: adminFormData.email,
+        password: adminFormData.password,
       });
 
       if (error) throw error;
 
-      const result = data as any;
-      
-      if (result.success) {
+      if (data.user) {
         localStorage.setItem('currentUser', JSON.stringify({
-          id: result.admin_id,
-          email: result.email,
-          fullName: result.full_name,
+          id: data.user.id,
+          email: data.user.email,
+          fullName: data.user.user_metadata?.full_name || 'Admin',
           isAdmin: true,
           type: 'admin'
         }));
@@ -120,8 +119,6 @@ const Auth = () => {
           description: "You have been signed in as administrator.",
         });
         navigate('/');
-      } else {
-        throw new Error(result.error || 'Invalid admin credentials');
       }
     } catch (error: any) {
       toast({
@@ -395,8 +392,7 @@ const Auth = () => {
             </Tabs>
 
             <div className="mt-4 text-center text-sm text-muted-foreground">
-              <p>For demo purposes:</p>
-              <p className="text-xs">Admin: admin@campusevents.com / admin123</p>
+              <p>Create admin accounts in Supabase Authentication</p>
             </div>
           </CardContent>
         </Card>

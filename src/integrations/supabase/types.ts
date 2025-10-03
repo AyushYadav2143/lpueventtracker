@@ -14,30 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      admin_credentials: {
-        Row: {
-          created_at: string | null
-          email: string
-          full_name: string
-          id: string
-          password_hash: string
-        }
-        Insert: {
-          created_at?: string | null
-          email: string
-          full_name: string
-          id?: string
-          password_hash: string
-        }
-        Update: {
-          created_at?: string | null
-          email?: string
-          full_name?: string
-          id?: string
-          password_hash?: string
-        }
-        Relationships: []
-      }
       events: {
         Row: {
           category: string
@@ -155,10 +131,6 @@ export type Database = {
       admin_update_event_status: {
         Args: { _event_id: string; _new_status: string }
         Returns: undefined
-      }
-      login_admin: {
-        Args: { _email: string; _password: string }
-        Returns: Json
       }
       login_user: {
         Args: { _email: string; _password: string }
