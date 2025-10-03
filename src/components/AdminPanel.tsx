@@ -52,9 +52,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, onEventStatusC
     try {
       setLoading(true);
       
-      const adminEmail = localStorage.getItem('adminEmail');
-      if (!adminEmail || localStorage.getItem('adminSession') !== 'true') {
-        throw new Error('Admin credentials not found');
+      // Check if user is authenticated with Supabase
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
+        throw new Error('Admin authentication required');
       }
       
       // Fetch pending events
@@ -77,7 +78,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, onEventStatusC
       console.error('Error fetching events:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch events.",
+        description: "Failed to fetch events. Please make sure you're logged in as admin.",
         variant: "destructive"
       });
     } finally {
@@ -115,9 +116,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, onEventStatusC
 
   const handleApproveEvent = async (eventId: string) => {
     try {
-      const adminEmail = localStorage.getItem('adminEmail');
-      if (!adminEmail || localStorage.getItem('adminSession') !== 'true') {
-        throw new Error('Admin credentials not found');
+      // Check if user is authenticated
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
+        throw new Error('Admin authentication required');
       }
 
       const { error } = await supabase.rpc('admin_update_event_status', {
@@ -140,7 +142,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, onEventStatusC
       console.error('Error approving event:', error);
       toast({
         title: "Error",
-        description: "Failed to approve event.",
+        description: "Failed to approve event. Please ensure you're logged in as admin.",
         variant: "destructive"
       });
     }
@@ -148,9 +150,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, onEventStatusC
 
   const handleRejectEvent = async (eventId: string) => {
     try {
-      const adminEmail = localStorage.getItem('adminEmail');
-      if (!adminEmail || localStorage.getItem('adminSession') !== 'true') {
-        throw new Error('Admin credentials not found');
+      // Check if user is authenticated
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
+        throw new Error('Admin authentication required');
       }
 
       const { error } = await supabase.rpc('admin_delete_event', {
@@ -172,7 +175,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ isOpen, onClose, onEventStatusC
       console.error('Error rejecting event:', error);
       toast({
         title: "Error",
-        description: "Failed to reject event.",
+        description: "Failed to reject event. Please ensure you're logged in as admin.",
         variant: "destructive"
       });
     }
