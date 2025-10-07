@@ -27,22 +27,21 @@ const Auth = () => {
   });
   const [tab, setTab] = useState<'signin' | 'signup' | 'admin'>('signin');
 
-  useEffect(() => {
-    // Initialize tab from URL (#admin or ?tab=admin)
-    const hash = window.location.hash.replace('#', '');
-    const params = new URLSearchParams(window.location.search);
-    const qp = params.get('tab');
-    const initial = (qp || hash) as 'signin' | 'signup' | 'admin' | null;
-    if (initial && ['signin', 'signup', 'admin'].includes(initial)) {
-      setTab(initial as 'signin' | 'signup' | 'admin');
-    }
+useEffect(() => {
+  // Initialize tab from URL (?tab=admin) or hash for BrowserRouter fallback
+  const params = new URLSearchParams(window.location.search);
+  const qp = params.get('tab');
+  const initial = (qp || '') as 'signin' | 'signup' | 'admin' | null;
+  if (initial && ['signin', 'signup', 'admin'].includes(initial)) {
+    setTab(initial as 'signin' | 'signup' | 'admin');
+  }
 
-    // Check if user is already logged in
-    const currentUser = localStorage.getItem('currentUser');
-    if (currentUser) {
-      navigate('/');
-    }
-  }, [navigate]);
+  // Check if user is already logged in
+  const currentUser = localStorage.getItem('currentUser');
+  if (currentUser) {
+    navigate('/');
+  }
+}, [navigate]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));

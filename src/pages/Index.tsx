@@ -8,6 +8,7 @@ import EventMap from '@/components/EventMap';
 import EventList from '@/components/EventList';
 import AddEventModal from '@/components/AddEventModal';
 import AdminPanel from '@/components/AdminPanel';
+import { useNavigate } from 'react-router-dom';
 
 interface Event {
   id: string;
@@ -34,6 +35,7 @@ interface User {
 
 const Index = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
   const [savedEventIds, setSavedEventIds] = useState<string[]>([]);
@@ -212,10 +214,9 @@ const Index = () => {
     }
   };
 
-  const handleLogin = () => {
-    // Redirect to auth page
-    window.location.href = '/auth';
-  };
+const handleLogin = () => {
+  navigate('/auth');
+};
 
   const handleLogout = async () => {
     localStorage.removeItem('currentUser');
@@ -274,14 +275,14 @@ const Index = () => {
               >
                 <LogIn className="w-4 h-4" />
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => { window.location.href = '/auth#admin'; }}
-                aria-label="Admin login"
-              >
-                Admin
-              </Button>
+<Button
+  variant="ghost"
+  size="sm"
+  onClick={() => { navigate('/auth?tab=admin'); }}
+  aria-label="Admin login"
+>
+  Admin
+</Button>
             </div>
           )}
         </div>
