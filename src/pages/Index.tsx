@@ -9,6 +9,7 @@ import EventList from '@/components/EventList';
 import AddEventModal from '@/components/AddEventModal';
 import AdminPanel from '@/components/AdminPanel';
 import { useNavigate } from 'react-router-dom';
+import vibelpu from '@/assets/vibelpu-logo.png';
 
 interface Event {
   id: string;
@@ -244,9 +245,12 @@ const handleLogin = () => {
       {/* Sidebar */}
       <div className="w-full md:w-1/3 lg:w-1/4 p-4 bg-card shadow-lg overflow-y-auto flex flex-col z-10">
         <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            LPU Events
-          </h1>
+          <div className="flex items-center gap-2">
+            <img src={vibelpu} alt="vibelpu logo" className="h-10 w-10 object-contain" />
+            <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+              vibelpu
+            </h1>
+          </div>
           {user ? (
             <div className="flex gap-2">
               {isAdmin() && (
