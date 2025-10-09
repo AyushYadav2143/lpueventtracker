@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Settings, User, LogIn } from 'lucide-react';
+import { Plus, Settings, User, LogIn, Menu } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import EventMap from '@/components/EventMap';
@@ -10,6 +10,7 @@ import AddEventModal from '@/components/AddEventModal';
 import AdminPanel from '@/components/AdminPanel';
 import { useNavigate } from 'react-router-dom';
 import vibelpu from '@/assets/vibelpu-logo.png';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 interface Event {
   id: string;
@@ -46,6 +47,7 @@ const Index = () => {
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<{lat: number; lng: number} | null>(null);
   const [isPickingLocation, setIsPickingLocation] = useState(false);
+  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
 
   useEffect(() => {
     // Check for current user from localStorage
@@ -242,8 +244,8 @@ const handleLogin = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
-      {/* Sidebar */}
-      <div className="w-full md:w-1/3 lg:w-1/4 p-4 bg-card shadow-lg overflow-y-auto flex flex-col z-10">
+      {/* Desktop Sidebar - hidden on mobile */}
+      <div className="hidden md:flex w-full md:w-1/3 lg:w-1/4 p-4 bg-card shadow-lg overflow-y-auto flex-col z-10">
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-2">
             <img src={vibelpu} alt="vibelpu logo" className="h-10 w-10 object-contain" />
@@ -279,14 +281,14 @@ const handleLogin = () => {
               >
                 <LogIn className="w-4 h-4" />
               </Button>
-<Button
-  variant="ghost"
-  size="sm"
-  onClick={() => { navigate('/auth?tab=admin'); }}
-  aria-label="Admin login"
->
-  Admin
-</Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => { navigate('/auth?tab=admin'); }}
+                aria-label="Admin login"
+              >
+                Admin
+              </Button>
             </div>
           )}
         </div>
@@ -322,8 +324,107 @@ const handleLogin = () => {
         </div>
       </div>
 
+      {/* Mobile Floating Button */}
+      <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
+        <SheetTrigger asChild>
+          <Button
+            className="md:hidden fixed top-4 left-4 z-50 shadow-lg bg-primary hover:bg-primary/90"
+            size="icon"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-[85vw] sm:w-[400px] p-4 overflow-y-auto">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-2">
+              <img src={vibelpu} alt="vibelpu logo" className="h-10 w-10 object-contain" />
+              <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                vibelpu
+              </h1>
+            </div>
+            {user ? (
+              <div className="flex gap-2">
+                {isAdmin() && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setShowAdminPanel(true);
+                      setMobileSheetOpen(false);
+                    }}
+                  >
+                    <Settings className="w-4 h-4" />
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLogout}
+                >
+                  <User className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLogin}
+                >
+                  <LogIn className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => { navigate('/auth?tab=admin'); }}
+                  aria-label="Admin login"
+                >
+                  Admin
+                </Button>
+              </div>
+            )}
+          </div>
+
+          <EventList
+            events={events}
+            savedEventIds={savedEventIds}
+            onRegister={handleRegister}
+            onSaveToggle={handleSaveToggle}
+            onGetDirections={handleGetDirections}
+            currentView={currentView}
+            onViewChange={setCurrentView}
+          />
+
+          <div className="mt-4 space-y-2">
+            <Button 
+              onClick={() => {
+                setShowAddEventModal(true);
+                setMobileSheetOpen(false);
+              }}
+              className="w-full bg-primary hover:bg-primary/90"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add New Event
+            </Button>
+            
+            {user && isAdmin() && (
+              <Button 
+                onClick={() => {
+                  setShowAdminPanel(true);
+                  setMobileSheetOpen(false);
+                }}
+                className="w-full bg-secondary hover:bg-secondary/80"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Admin Panel
+              </Button>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
       {/* Map */}
-      <div className="flex-grow relative z-0">
+      <div className="flex-grow relative z-0 h-screen md:h-auto">
         <EventMap
           events={events}
           isPickingLocation={isPickingLocation}
