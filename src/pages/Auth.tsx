@@ -391,7 +391,7 @@ useEffect(() => {
             </Tabs>
 
             <div className="mt-4 text-center text-sm text-muted-foreground">
-              <p>Create admin accounts in Supabase Authentication</p>
+              <p></p>
             </div>
           </CardContent>
         </Card>
