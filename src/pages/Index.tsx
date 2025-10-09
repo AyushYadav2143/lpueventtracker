@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Settings, User, LogIn, Menu } from 'lucide-react';
+import { Plus, Settings, User, LogIn, Menu, Linkedin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import EventMap from '@/components/EventMap';
@@ -247,11 +247,22 @@ const handleLogin = () => {
       {/* Desktop Sidebar - hidden on mobile */}
       <div className="hidden md:flex w-full md:w-1/3 lg:w-1/4 p-4 bg-card shadow-lg overflow-y-auto flex-col z-10">
         <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center gap-2">
-            <img src={vibelpu} alt="vibelpu logo" className="h-10 w-10 object-contain" />
-            <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              vibelpu
-            </h1>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <img src={vibelpu} alt="vibelpu logo" className="h-10 w-10 object-contain" />
+              <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                vibelpu
+              </h1>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.open('https://www.linkedin.com/in/vibelpu/', '_blank')}
+              className="w-fit"
+            >
+              <Linkedin className="w-3 h-3 mr-1" />
+              LinkedIn
+            </Button>
           </div>
           {user ? (
             <div className="flex gap-2">
@@ -336,11 +347,22 @@ const handleLogin = () => {
         </SheetTrigger>
         <SheetContent side="left" className="w-[85vw] sm:w-[400px] p-4 overflow-y-auto">
           <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-2">
-              <img src={vibelpu} alt="vibelpu logo" className="h-10 w-10 object-contain" />
-              <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                vibelpu
-              </h1>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <img src={vibelpu} alt="vibelpu logo" className="h-10 w-10 object-contain" />
+                <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                  vibelpu
+                </h1>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open('https://www.linkedin.com/in/vibelpu/', '_blank')}
+                className="w-fit"
+              >
+                <Linkedin className="w-3 h-3 mr-1" />
+                LinkedIn
+              </Button>
             </div>
             {user ? (
               <div className="flex gap-2">
